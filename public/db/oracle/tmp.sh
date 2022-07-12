@@ -1,0 +1,11 @@
+iconv -f gbk -t utf-8 ../oracle1/blobtofile.cpp >blobtofile.cpp
+iconv -f gbk -t utf-8 ../oracle1/clobtofile.cpp >clobtofile.cpp
+iconv -f gbk -t utf-8 ../oracle1/counttable.cpp >counttable.cpp
+iconv -f gbk -t utf-8 ../oracle1/createtable.cpp >createtable.cpp
+iconv -f gbk -t utf-8 ../oracle1/deletetable.cpp >deletetable.cpp
+iconv -f gbk -t utf-8 ../oracle1/execplsql.cpp >execplsql.cpp
+iconv -f gbk -t utf-8 ../oracle1/filetoblob.cpp >filetoblob.cpp
+iconv -f gbk -t utf-8 ../oracle1/filetoclob.cpp >filetoclob.cpp
+iconv -f gbk -t utf-8 ../oracle1/inserttable.cpp >inserttable.cpp
+iconv -f gbk -t utf-8 ../oracle1/selecttable.cpp >selecttable.cpp
+iconv -f gbk -t utf-8 ../oracle1/updatetable.cpp >updatetable.cpp

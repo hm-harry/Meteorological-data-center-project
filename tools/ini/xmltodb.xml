@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<!--该参数文件存放了数据中心入库参数。-->
+<xmltodb>
+  <filename>ZHOBTCODE_*.XML</filename><tname>T_ZHOBTCODE1</tname><uptbz>1</uptbz><execsql>delete from T_ZHOBTCODE1</execsql><endl/>
+  <filename>ZHOBTMIND_*.XML</filename><tname>T_ZHOBTMIND1</tname><uptbz>1</uptbz><endl/>
+</xmltodb>

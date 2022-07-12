@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="gbk" ?>
+<root>
+    <!-- 程序运行的日志文件名。 -->
+    <logpath>/log/hssms</logpath>
+
+    <!-- 数据库连接参数。 -->
+    <connstr>hssms/smspwd@hssmszx</connstr>
+
+    <!-- 数据文件存放的根目录。 -->
+    <datapath>/data/hssms</datapath>
+
+    <!-- 中心服务器的ip地址。 -->
+    <serverip>192.168.1.1</serverip>
+
+    <!-- 中心服务器的通信端口。 -->
+    <port>5058</port>
+
+    <!-- 是否采用长连接，true-是；false-否。 -->
+    <online>true</online>
+</root>
