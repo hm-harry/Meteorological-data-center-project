@@ -1,6 +1,6 @@
 /*
  * 程序名：demo04.cpp，此程序用于演示粘包的socket服务端。
- * 作者：吴从周
+ * 作者：吴惠明
 */
 #include <stdio.h>
 #include <string.h>

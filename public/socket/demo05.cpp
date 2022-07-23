@@ -1,6 +1,6 @@
 /*
- * 程序名：demo05.cpp，此程序用于演示不粘包的socket客户端。
- * 作者：吴从周。
+ * 程序名：demo05.cpp，此程序用于演示粘包的socket客户端。
+ * 作者：吴惠明。
 */
 #include "../_public.h"
  
@@ -27,6 +27,7 @@ int main(int argc,char *argv[])
   if (connect(sockfd, (struct sockaddr *)&servaddr,sizeof(servaddr)) != 0)  // 向服务端发起连接清求。
   { perror("connect"); close(sockfd); return -1; }
 
+  int iret;
   char buffer[1024];
  
   // 第3步：与服务端通讯，连续发送1000个报文。
@@ -35,7 +36,8 @@ int main(int argc,char *argv[])
     memset(buffer,0,sizeof(buffer));
     sprintf(buffer,"这是第%d个超级女生，编号%03d。",ii+1,ii+1);
 
-    if (TcpWrite(sockfd,buffer,strlen(buffer))==false) break; // 向服务端发送请求报文。
+    if ( (TcpWrite(sockfd, buffer, strlen(buffer))) == false) // 向服务端发送请求报文。
+    { perror("send"); break; }
 
     printf("发送：%s\n",buffer);
   }

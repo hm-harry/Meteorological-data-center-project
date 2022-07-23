@@ -1,6 +1,6 @@
 /*
  * 程序名：demo02.cpp，此程序用于演示socket通讯的服务端。
- * 作者：吴从周
+ * 作者：吴惠明
 */
 #include <stdio.h>
 #include <string.h>
