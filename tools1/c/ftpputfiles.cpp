@@ -236,7 +236,7 @@ bool  _ftpputfiles(){
     SNPRINTF(strlocalfilename, sizeof(strlocalfilename), 300, "%s/%s", starg.localpath, vlistfile2[ii].filename);
 
     // 调用ftp.put()方法从服务器上传文件
-    logfile.Write("put %s ...",strlocalfilename);
+    logfile.Write("put %s ...",strlocalfilename, strremotefilename);
     if(ftp.put(strlocalfilename, strremotefilename, true) == false){
       logfile.Write("failed.\n");
       return false;

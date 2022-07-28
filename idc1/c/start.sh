@@ -35,3 +35,21 @@
 
 # 清理采集的全国气象站点观测的分钟数据目录/tmp/tcpgettest中的历史数据。
 /project/tools1/bin/procctl 300 /project/tools1/bin/deletefiles /tmp/tcpgettest "*" 0.04
+
+# 把全国站点参数数据保存到数据库表中，如果站点不存在则插入，站点已存在则更新。
+/project/tools1/bin/procctl 120 /project/idc1/bin/obtcodetodb /project/idc1/ini/stcode.ini "127.0.0.1,root,whmhhh1998818,mysql,3306" utf8 /log/idc/obtcodetodb.log
+
+# 本程序用于把全国站点分钟观测数据入库到T_ZHOBTMIND表中,数据只写入，不更新。
+/project/tools1/bin/procctl 10 /project/idc1/bin/obtmindtodb /idcdata/surfdata "127.0.0.1,root,whmhhh1998818,mysql,3306" utf8 /log/idc/obtmindtodb.log
+
+# 清理T_ZHOBTMIND表中120分钟之前的数据，防止磁盘被撑满
+/project/tools1/bin/procctl 120 /project/tools1/bin/execsql /project/idc1/sql/cleardata.sql "127.0.0.1,root,whmhhh1998818,mysql,3306" utf8 /log/idc/execsql.log
+
+# 每隔一个小时把T_ZHOBTCODE表的全部数据抽取出来
+/project/tools1/bin/procctl 3600 /project/tools1/bin/dminingmysql /log/idc/dminingmysql_ZHOBTCODE.log     "<connstr>127.0.0.1,root,whmhhh1998818,mysql,3306</connstr><charset>utf8</charset><selectsql>Select obtid,cityname,provname,lat,lon,height from T_ZHOBTCODE</selectsql><fieldstr>obtid,cityname,provname,lat,lon,height</fieldstr><fieldlen>10,30,30,10,10,10</fieldlen><bfilename>ZHOBTCODE</bfilename><efilename>HYCZ</efilename><outpath>/idcdata/dmindata</outpath><timeout>30</timeout><pname>dminingmysql_ZHOBTCODE</pname>"
+
+# 每30秒从T_ZHOBTMIND表中把增量抽取出来
+/project/tools1/bin/procctl 30 /project/tools1/bin/dminingmysql /log/idc/dminingmysql_ZHOBTMIND.log     "<connstr>127.0.0.1,root,whmhhh1998818,mysql,3306</connstr><charset>utf8</charset><selectsql>Select obtid,date_format(ddatetime,'%%Y-%%m-%%d %%H:%%m:%%s'),t,p,u,wd,wf,r,vis,keyid from T_ZHOBTMIND where keyid>:1 and ddatetime>timestampadd(minute,-120,now())</selectsql><fieldstr>obtid,ddatetime,t,p,u,wd,wf,r,vis,keyid</fieldstr><fieldlen>10,19,8,8,8,8,8,8,8,15</fieldlen><bfilename>ZHOBTMIND</bfilename><efilename>HYCZ</efilename><outpath>/idcdata/dmindata</outpath><incfield>keyid</incfield><timeout>30</timeout><pname>dminingmysql_ZHOBTMIND_HYCZ</pname><maxcount>1000</maxcount><connstr1>127.0.0.1,root,whmhhh1998818,mysql,3306</connstr1>"
+
+# 清理/idcdata/dmindata目录中文件，防止空间撑满
+/project/tools1/bin/procctl 100 /project/tools1/bin/deletefiles /idcdata/dmindata "*" 0.02

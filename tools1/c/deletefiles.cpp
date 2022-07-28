@@ -15,7 +15,7 @@ int main(int argc, char* argv[]){
     printf("        /project/tools1/bin/procctl 300 /project/tools1/bin/deletefiles /tmp/idc/surfdata \"*.xml,*.json\" 0.01\n\n");
 
 
-    printf("这是一个工具程序，用于压缩历史的数据文件和日志。\n");
+    printf("这是一个工具程序，用于删除历史的数据文件和日志。\n");
     printf("本程序把pathname目录及子目录中timeout天之间的匹配matchstr文件全部删除，timeout可以是小数。\n");
     printf("本程序不写日志文件，也不会在控制台输出任何信息.\n\n\n");
 

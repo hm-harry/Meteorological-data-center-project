@@ -4,10 +4,22 @@ PUBINCL = -I /project/public
 # 开发框架cpp文件名，这里直接包含进来，没有才有链接库，是为了方便调试
 PUBCPP = /project/public/_public.cpp
 
+# mysql头文件存放路径
+MYSQLINCL = -I /usr/local/mysql/include -I /project/public/db/mysql
+
+# mysql库文件保存路径
+MYSQLLIB = -L /usr/local/mysql/lib
+
+# mysql链接库
+MYSQLLIBS = -l mysqlclient
+
+# 开发框架mysql的cpp文件名，这里直接包含进来，没有才有链接库，为了方便调试
+MYSQLCPP = /project/public/db/mysql/_mysql.cpp
+
 # 编译参数
 CFLAGS = -g
 
-all:procctl checkproc gzipfiles deletefiles ftpgetfiles ftpputfiles tcpputfiles fileserver tcpgetfiles
+all:procctl checkproc gzipfiles deletefiles ftpgetfiles ftpputfiles tcpputfiles fileserver tcpgetfiles execsql dminingmysql xmltodb
 
 procctl:procctl.cpp
 	g++ -o procctl procctl.cpp
@@ -44,5 +56,18 @@ fileserver:fileserver.cpp
 tcpgetfiles:tcpgetfiles.cpp
 	g++ $(CFLAGS) -o tcpgetfiles tcpgetfiles.cpp $(PUBINCL) $(PUBCPP) -lm -lc
 	cp tcpgetfiles ../bin/.
+
+execsql:execsql.cpp
+	g++ $(CFLAGS) -o execsql execsql.cpp $(PUBINCL) $(PUBCPP) $(MYSQLINCL) $(MYSQLLIB) $(MYSQLLIBS) $(MYSQLCPP) -lm -lc
+	cp execsql ../bin/.
+
+dminingmysql:dminingmysql.cpp
+	g++ $(CFLAGS) -o dminingmysql dminingmysql.cpp $(PUBINCL) $(PUBCPP) $(MYSQLINCL) $(MYSQLLIB) $(MYSQLLIBS) $(MYSQLCPP) -lm -lc
+	cp dminingmysql ../bin/.
+
+xmltodb:xmltodb.cpp
+	g++ $(CFLAGS) -o xmltodb xmltodb.cpp $(PUBINCL) $(PUBCPP) $(MYSQLINCL) $(MYSQLLIB) $(MYSQLLIBS) $(MYSQLCPP) -lm -lc
+	cp xmltodb ../bin/.
+
 clean:
-	rm -f procctl checkproc gzipfiles deletefiles ftpgetfiles ftpputfiles tcpputfiles fileserver tcpgetfiles
+	rm -f procctl checkproc gzipfiles deletefiles ftpgetfiles ftpputfiles tcpputfiles fileserver tcpgetfiles execsql dminingmysql xmltodb
