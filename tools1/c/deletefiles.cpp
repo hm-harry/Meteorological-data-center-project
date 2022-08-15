@@ -45,7 +45,7 @@ int main(int argc, char* argv[]){
   while(true){
     //得到一个文件的信息，CDir.ReadDir()
     if(Dir.ReadDir() == false) break;
-
+printf("=%s=\n",Dir.m_FullFileName);  
     // printf("DirName = %s, FileName = %s, FullFileName = %s, FileSize = %d, ModifyTime = %s, CreateTime = %s, AccessTime = %s\n", Dir.m_DirName, Dir.m_FileName,\
 		    Dir.m_FullFileName, Dir.m_FileSize, Dir.m_ModifyTime, Dir.m_CreateTime, Dir.m_AccessTime);
 

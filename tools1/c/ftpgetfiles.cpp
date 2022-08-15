@@ -262,12 +262,12 @@ bool  _ftpgetfiles(){
     SNPRINTF(strlocalfilename, sizeof(strlocalfilename), 300, "%s/%s", starg.localpath, vlistfile2[ii].filename);
 
     // 调用ftp.get()方法从服务器下载文件
-    logfile.Write("get %s ...",strremotefilename);
+    logfile.Write("get %s ... to %s ",strremotefilename, strlocalfilename);
     if(ftp.get(strremotefilename, strlocalfilename) == false){
       logfile.Write("failed.\n");
       return false;
     }
-    logfile.Write("ok.\n");
+    logfile.WriteEx("ok.\n");
 
     PActive.UptATime(); // 更新进程心跳
 

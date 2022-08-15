@@ -1,6 +1,10 @@
 killall -9 procctl
-killall gzipfiles crtsurfdata deletefiles ftpgetfiles ftpputfiles fileserver tcpputfiles tcpgetfiles obtcodetodb obtmindtodb execsql dminingmysql
+killall gzipfiles crtsurfdata deletefiles ftpgetfiles ftpputfiles fileserver tcpputfiles tcpgetfiles obtcodetodb 
+killall obtmindtodb execsql dminingmysql xmltodb syncupdate syncincrement deletetable migratetable xmltodb_oracle
+killall migratetable_oracle deletetable_oracle syncupdate_oracle syncincrement_oracle
 
 sleep 3
 
-killall -9 gzipfiles crtsurfdata deletefiles ftpgetfiles ftpputfiles fileserver tcpputfiles tcpgetfiles obtcodetodb obtmindtodb execsql dminingmysql
+killall -9 gzipfiles crtsurfdata deletefiles ftpgetfiles ftpputfiles fileserver tcpputfiles tcpgetfiles obtcodetodb 
+killall -9 obtmindtodb execsql dminingmysql xmltodb syncupdate syncincrement deletetable migratetable xmltodb_oracle
+killall -9 migratetable_oracle deletetable_oracle syncupdate_oracle syncincrement_oracle
