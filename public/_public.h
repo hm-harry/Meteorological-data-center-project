@@ -438,6 +438,7 @@ public:
   bool    m_bBackup;           // 是否自动切换，日志文件大小超过m_MaxLogSize将自动切换，缺省启用。
   long    m_MaxLogSize;        // 最大日志文件的大小，单位M，缺省100M。
   // pthread_spinlock_t spin;  // 初学暂时不要关心这行代码。
+  pthread_spinlock_t spin;
 
   // 构造函数。
   // MaxLogSize：最大日志文件的大小，单位M，缺省100M，最小为10M。

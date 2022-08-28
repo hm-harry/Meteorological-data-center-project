@@ -1,0 +1,4 @@
+<retcode>0</retcode><message>ok</message>
+<data>
+<obtid>59280</obtid><ddatetime>20220824150854</ddatetime><t>325</t><p>10244</p><u>17</u><wd>319</wd><wf>21</wf><r>14</r><vis>101871</vis><endl/>
+</data>

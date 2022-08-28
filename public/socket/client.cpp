@@ -32,6 +32,13 @@ int main(int argc, char *argv[])
 
   printf("connect ok.\n");
 
+// int bufsize = 0;
+// socklen_t optlen = sizeof(bufsize);
+// getsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &bufsize, &optlen); // 获取接收缓冲区大小
+// printf("recv bufsize=%d\n", bufsize);
+// getsockopt(sockfd, SOL_SOCKET, SO_SNDBUF, &bufsize, &optlen); // 获取发送缓冲区大小
+// printf("send bufsize=%d\n", bufsize);
+
   for (int ii=0;ii<5000000000;ii++)
   {
     // 从命令行输入内容。

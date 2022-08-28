@@ -274,6 +274,162 @@ insert into dsttname(m_allcols) select m_allcols from srctname where keycol in (
 
 
 
+## 数据服务总线模块
+
+数据中心目标是为业务系统提供数据支撑环境
+
+1.业务系统直连数据中心的应用数据库，可以任意访问数据
+
+2.业务系统通过数据服务总线，采用HTTP协议获取数据
+
+
+
+通过配置参数，实现不同数据接口；设置访问权限；填写访问日志（接口名、时间、数据量）
+
+**模块实现：**
+
+1.服务端初始化TcpServer.InitServer(starg.port)
+
+2.定义一个类connpool（数据库连接池）类中使用connpool::init(const char* connstr, const char* charset, int maxconns, int timeout)初始化线程池和锁（每个数据库连接对应一把mutex锁）
+
+3.多开一个进程用来定期检查数据库连接池：pthread_create(&checkpoolid, NULL, checkpool, 0) != 0)
+
+void* checkpool(void* arg)中循环调用oraconnpool.checkpool();    其中循环检查：（1）尝试加锁：pthread_mutex_trylock(&m_conns[ii].mutex) == 0 （2）检查是否超时，超时的断开连接：disconnect，重新设置时间atime = 0（3）如果没有超时，执行一次sql，验证连接是否有效conn.execute("select * from dual")（4）解锁 pthread_mutex_unlock(&m_conns[ii].mutex);
+
+4.启动10个工作线程（线程数比CPU核数略多），定义结构体st_pthinfo（其中pthid表示线程编号，atime最近一次活动的时间）         pthread_create(&stpthinfo.pthid, NULL, thmain, (void*)(long)ii) 
+
+
+
+
+
+
+
+### 数据库连接池
+
+
+
+### 线程池
+
+1.在主进程中，预先创建n个工作线程；2.主进程监听客户端连接，当有新客户端连接，将他放入处理队列
+
+3.工作线程从队列中取出客户端连接，处理客户端业务需求
+
+**实现：**在队列中存放客户端的socket，采用条件变量加互斥锁（生产消费者模型）实现队列
+
+**线程池的监控：**守护线程+心跳机制（地址共享）    守护线程检查工作线程的心跳时间，如果超时，先取消再启动
+
+
+
+### 数据安全
+
+1.硬件防火墙
+
+2.身份认证：（1）分配用户名和密码 （2）分配唯一的key
+
+3.黑名单、白名单、绑定ip（只能通过某ip地址访问）
+
+
+
+### 优化方案
+
+1.多数据库            2.采用缓存（cache）技术：redis、内存、磁盘文件
+
+
+
+## I/O复用技术、网络代理
+
+传统方法：每个进程/线程只能管理一个客户端连接
+
+线程池：只适用于短连接
+
+I/O复用：在单进程/线程中同时监视多个连接（监视、读、写）
+
+**select模型**：只能管理1024个客户端  **poll模型**：连接越多，性能线性下降
+
+**epoll模型**：只要内存足够，管理的连接数没有上限，性能不会下降
+
+
+
+### Select模型：
+
+int select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout);
+
+事件：1.新客户端的连接请求accept；2.客户端有报文到达recv，可以读；3.客户端连接已断开；
+
+4.可以向客户端发送报文send，可以写
+
+TCP有缓冲区，如果缓冲区已填满，send函数会阻塞，如果发送端关闭了socket，缓冲区中的数据会继续发送给接收端
+
+写事件：如果tcp缓冲区没有满，那么socket连接可写，tcp发送缓冲区2.5M，接收缓冲区1M。getsockopt查看
+
+超时机制：struct timeval *timeout   select第五个参数
+
+gettimeofday(&timeout , NULL); // 获取当前时间 now.tv_sec = now.tv_sec + 20;
+
+水平触发：如果事件和数据在缓冲区中，程序调用select()时会报告事件，数据不会丢失
+
+如果select()已经报告了事件但是程序没有处理他，下次调用select()的时候会重新报告
+
+**缺点：**1.支持的连接数太小（1024）调整意义不大 2.每次调用select()要把fdset从用户态拷贝到内核，调用之后要把fdset从内核态拷贝到用户态 3.返回后需要遍历bitmap，效率比较低
+
+**模块实现：**
+
+1.初始化服务端用于**监听**的socket。（1）int sock = **socket**(AF_INET,SOCK_STREAM,0);（2）int opt = 1; unsigned int len = sizeof(opt); **setsockopt**(sock,SOL_SOCKET,SO_REUSEADDR,&opt,len);；（3） struct sockaddr_in servaddr; servaddr.sin_family = AF_INET; servaddr.sin_addr.s_addr = htonl(INADDR_ANY); servaddr.sin_port = htons(port);  **bind**(sock,(struct sockaddr *)&servaddr,sizeof(servaddr)；（4）**listen**(sock,5)    返回sock至主函数中的listensock
+
+2.（1）新建bitmap：**fd_set** readfds;  （2）初始化bitmap ：**FD_ZERO**(&readfds);（3） 添加listensock **FD_SET**(listensock, &readfds); (4)记录bitmap中最大值：int **maxfd** = listensock;
+
+3.循环利用select接收事件  
+
+（1）fd_set tmpfds = readfds; **select**(maxfd + 1, &tmpfds, NULL, NULL, &timeout);小于0调用失败等于0超时
+
+（2）遍历eventfd从0到maxfd    比较**FD_ISSET**(eventfd, &tmpfds) > 0 表示有事件
+
+如果eventfd==listensock表示有新的客户端连上来，    接收struct sockaddr_in client; socklen_t len = sizeof(client); int clientsock = **accept**(listensock, (struct sockaddr*)&client, &len);          把新客户端的socket加入可读socket的集合，FD_SET(clientsock, &readfds);    更新maxfd的值    if(maxfd < clientsock) maxfd = clientsock;
+
+如果是客户端连接的socket有事件，判断**recv**(eventfd, buffer, sizeof(buffer), 0)
+
+​       如果小于等于0，表明如果客户端连接已断开，关闭客户端的socket：**close**(eventfd); 把已关闭客户端的socket从可读socket的集合中删除**FD_CLR**(eventfd, &readfds);  更新maxfd的值
+
+​       如果大于0有报文发过来，处理buffer，还可以发送回去**send**(eventfd, buffer, strlen(buffer), 0);
+
+
+
+## poll模型
+
+相比select模型，弃用了bitmap，采用数组表示
+
+int poll(struct pollfd fds[], nfds_t nfds, int timeout);
+
+struct pollfd中参数有1.int fd需要监视的socket 2.short events需要关心的事件 3.revents  poll函数返回的事件
+
+events主要是POLLIN和POLLOUT两种
+
+1.poll和select本质是没有区别，弃用了bitmap，采用数组表示法    2.每次调用poll把数组从用户态拷贝到内核，调用之后要把fdset从内核态拷贝到用户态 3.返回后需要遍历bitmap，效率比较低  3.需要遍历数组效率较低
+
+轻量级的读检查是否超时
+
+struct pollfd fds;
+
+fds.fd=sockfd;
+
+fds.events=POLLIN;
+
+if ( poll(&fds,1,itimeout*1000) <= 0 ) return false;
+
+## epoll模型
+
+epoll没有内存拷贝、没有轮巡、没有遍历
+
+创建句柄：int epoll_create(int size); 返回值：成功：文件描述符，失败：-1
+
+注册事件：int epoll_ctl(int epfd, int op, int fd, struct epoll_event* event);
+
+op：EPOLL_CTL_ADD、EPOLL_CTL_MOD、EPOLL_CTL_DEL
+
+等待事件：int epoll_wait(int epfd, struct epoll_event* event, int maxevents, int timeout);
+
+
+
 ## Oracle数据开发
 
  sqlplus / as sysdba

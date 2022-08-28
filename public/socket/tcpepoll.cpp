@@ -1,14 +1,12 @@
 /*
- * 程序名：tcpepoll.cpp，此程序用于演示采用epoll模型的使用方法。
- * 作者：吴从周
+ * 程序名：tcpselect.cpp，此程序用于演示采用select模型的使用方法。
+ * 作者：吴惠明
 */
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
 #include <sys/socket.h>
-#include <sys/types.h>          /* See NOTES */
 #include <arpa/inet.h>
 #include <sys/fcntl.h>
 #include <sys/epoll.h>
@@ -26,73 +24,68 @@ int main(int argc,char *argv[])
 
   if (listensock < 0) { printf("initserver() failed.\n"); return -1; }
 
-  // 创建epoll句柄。
-  int epollfd=epoll_create(1);
+  // 创建epoll句柄
+  int epollfd = epoll_create(1);
 
-  // 为监听的socket准备可读事件。
-  struct epoll_event ev;  // 声明事件的数据结构。
-  ev.events=EPOLLIN;      // 读事件。
-  ev.data.fd=listensock;  // 指定事件的自定义数据，会随着epoll_wait()返回的事件一并返回。
+  // 为监听的socket准备可读事件
+  struct epoll_event ev; // 声明事件的数据结构
+  ev.events = EPOLLIN; // 读事件
+  ev.data.fd = listensock; // 指定事件的自定义数据，会随着epoll_wait()返回的事件一起返回
+  
+  // 把监听的socket的事件加入epollfd中
+  epoll_ctl(epollfd, EPOLL_CTL_ADD, listensock, &ev);
 
-  // 把监听的socket的事件加入epollfd中。
-  epoll_ctl(epollfd,EPOLL_CTL_ADD,listensock,&ev);
-
-  struct epoll_event evs[10];      // 存放epoll返回的事件。
+  struct epoll_event evs[10]; // 存放epoll返回的事件
 
   while (true)
   {
-    // 等待监视的socket有事件发生。
-    int infds=epoll_wait(epollfd,evs,10,-1);
+    // 等待监视的socket有事件发生。最后一个参数是超时时间ms
+    int infds = epoll_wait(epollfd, evs, 10, -1);
 
     // 返回失败。
-    if (infds < 0)
+    if(infds < 0)
     {
-      perror("epoll() failed"); break;
+      perror("select() failed"); break;
     }
 
-    // 超时。
+    // 超时，在本程序中，select函数最后一个参数为空，不存在超时的情况，但以下代码还是留着。
     if (infds == 0)
     {
-      printf("epoll() timeout.\n"); continue;
+      printf("select() timeout.\n"); continue;
     }
 
-    // 如果infds>0，表示有事件发生的socket的数量。
-    // 遍历epoll返回的已发生事件的数组evs。
-    for (int ii=0;ii<infds;ii++)
-    {
-      printf("events=%d,data.fd=%d\n",evs[ii].events,evs[ii].data.fd);
-
-      // 如果发生事件的是listensock，表示有新的客户端连上来。
-      if (evs[ii].data.fd==listensock)
-      {
+    // 如果infds>0，表示有事件发送的socket的数量
+    // 遍历epoll返回的已发生事件的数组
+    for(int ii = 0; ii < infds; ++ii){
+      printf("events = %d, data.fd = %d\n", evs[ii].events, evs[ii].data.fd);
+   
+      // 如果发生事件的是listensock，表示有新的客户端连上来
+      if(evs[ii].data.fd == listensock){
         struct sockaddr_in client;
         socklen_t len = sizeof(client);
-        int clientsock = accept(listensock,(struct sockaddr*)&client,&len);
+        int clientsock = accept(listensock, (struct sockaddr*)&client, &len);
+        if(clientsock < 0){ perror("accept() failed"); continue;}
 
         printf ("accept client(socket=%d) ok.\n",clientsock);
 
-        // 为新客户端准备可读事件，并添加到epoll中。
-        ev.data.fd=clientsock;
-        ev.events=EPOLLIN;
-        epoll_ctl(epollfd,EPOLL_CTL_ADD,clientsock,&ev);
-      }
-      else
-      {
-        // 如果是客户端连接的socke有事件，表示有报文发过来或者连接已断开。
-        char buffer[1024]; // 存放从客户端读取的数据。
-        memset(buffer,0,sizeof(buffer));
-        if (recv(evs[ii].data.fd,buffer,sizeof(buffer),0)<=0)
-        {
-          // 如果客户端的连接已断开。
-          printf("client(eventfd=%d) disconnected.\n",evs[ii].data.fd);
-          close(evs[ii].data.fd);            // 关闭客户端的socket
-        }
-        else
-        {
-          // 如果客户端有报文发过来。
-          printf("recv(eventfd=%d):%s\n",evs[ii].data.fd,buffer);
-          // 把接收到的报文内容原封不动的发回去。
-          send(evs[ii].data.fd,buffer,strlen(buffer),0);
+        // 为新客户端准备可读事件，并添加到epoll中
+        ev.data.fd = clientsock;
+        ev.events = EPOLLIN;
+        epoll_ctl(epollfd, EPOLL_CTL_ADD, clientsock, &ev);
+      }else{
+        // 如果是客户端连接的socket有事件，表示有报文发过来或者连接已断开
+        char buffer[1024]; // 存放从客户端读取的数据
+        memset(buffer, 0, sizeof(buffer));
+        if(recv(evs[ii].data.fd, buffer, sizeof(buffer), 0) <= 0){
+          // 如果客户端连接已断开
+          printf("client(eventfd = %d) disconnected.\n", evs[ii].data.fd);
+          close(evs[ii].data.fd); // 关闭客户端的socket
+        }else{
+          // 如果客户端有报文发过来
+          printf("recv(eventfd = %d):%s\n", evs[ii].data.fd, buffer);
+          // 把接收到的报文内容原封不动的发回去
+          // select写机制查看是否缓冲区满，其实没必要，send自带
+          send(evs[ii].data.fd, buffer, strlen(buffer), 0);
         }
       }
     }

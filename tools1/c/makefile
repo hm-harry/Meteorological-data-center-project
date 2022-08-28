@@ -33,7 +33,7 @@ CFLAGS = -g
 
 all:procctl checkproc gzipfiles deletefiles ftpgetfiles ftpputfiles tcpputfiles fileserver tcpgetfiles execsql dminingmysql xmltodb syncupdate \
 syncincrement syncincrementex deletetable migratetable  xmltodb_oracle deletetable_oracle migratetable_oracle dminingoracle syncupdate_oracle \
-syncincrement_oracle syncincrementex_oracle
+syncincrement_oracle syncincrementex_oracle webserver
 
 procctl:procctl.cpp
 	g++ -o procctl procctl.cpp
@@ -84,7 +84,7 @@ xmltodb:xmltodb.cpp _tools.h _tools.cpp
 	cp xmltodb ../bin/.
 
 syncupdate:syncupdate.cpp _tools.h _tools.cpp
-	g++ $(CFLAGS) -o syncupdate syncupdate.cpp _tools.cpp $(PUBINCL) $(PUBCPP) $(MYSQLINCL) $(MYSQLLIB) $(MYSQLLIBS) $(MYSQLCPP) -lm -lc
+	g++ $(CFLAGS) -o syncupdate syncupdate.cpp _tools.cpp $(PUBINCL) $(PUBCPP) $(MYSQLINCL) $(MYSQLLIB) $(MYSQLLIBS) $(MYSQLCPP) -lpthread -lm -lc
 	cp syncupdate ../bin/.
 
 syncincrement:syncincrement.cpp _tools.h _tools.cpp
@@ -120,7 +120,7 @@ dminingoracle:dminingoracle.cpp _tools_oracle.h _tools_oracle.cpp
 	cp dminingoracle ../bin/.
 
 syncupdate_oracle:syncupdate_oracle.cpp _tools_oracle.h _tools_oracle.cpp
-	g++ $(CFLAGS) -o syncupdate_oracle syncupdate_oracle.cpp _tools_oracle.cpp $(PUBINCL) $(PUBCPP) $(ORAINCL) $(ORALIB) $(ORALIBS) $(ORACPP) -lm -lc
+	g++ $(CFLAGS) -o syncupdate_oracle syncupdate_oracle.cpp _tools_oracle.cpp $(PUBINCL) $(PUBCPP) $(ORAINCL) $(ORALIB) $(ORALIBS) $(ORACPP) -lpthread -lm -lc
 	cp syncupdate_oracle ../bin/.
 
 syncincrement_oracle:syncincrement_oracle.cpp _tools_oracle.h _tools_oracle.cpp
@@ -131,7 +131,10 @@ syncincrementex_oracle:syncincrementex_oracle.cpp _tools_oracle.h _tools_oracle.
 	g++ $(CFLAGS) -o syncincrementex_oracle syncincrementex_oracle.cpp _tools_oracle.cpp $(PUBINCL) $(PUBCPP) $(ORAINCL) $(ORALIB) $(ORALIBS) $(ORACPP) -lm -lc
 	cp syncincrementex_oracle ../bin/.
 
+webserver:webserver.cpp
+	g++ $(CFLAGS) -o webserver webserver.cpp $(PUBINCL) $(PUBCPP) $(ORAINCL) $(ORALIB) $(ORALIBS) $(ORACPP) -lpthread -lm -lc
+	cp webserver ../bin/.
 clean:
 	rm -f procctl checkproc gzipfiles deletefiles ftpgetfiles ftpputfiles tcpputfiles fileserver tcpgetfiles execsql dminingmysql xmltodb syncupdate \
 	syncincrement syncincrementex deletetable migratetable xmltodb_oracle deletetable_oracle migratetable_oracle dminingoracle syncupdate_oracle \
-	syncincrement_oracle syncincrementex_oracle
+	syncincrement_oracle syncincrementex_oracle webserver

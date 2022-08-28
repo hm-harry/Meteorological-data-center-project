@@ -947,8 +947,8 @@ void timetostr(const time_t ltime,char *stime,const char *fmt)
 
   strcpy(stime,"");
 
-  struct tm sttm = *localtime ( &ltime );
-  // struct tm sttm; localtime_r(&ltime,&sttm); 
+  // struct tm sttm = *localtime ( &ltime );// 不安全版本
+  struct tm sttm; localtime_r(&ltime,&sttm); 
 
   sttm.tm_year=sttm.tm_year+1900;
   sttm.tm_mon++;
@@ -1094,6 +1094,7 @@ CLogFile::CLogFile(const long MaxLogSize)
   if (m_MaxLogSize<10) m_MaxLogSize=10;
 
   // pthread_pin_init(&spin,0);  // 初学暂时不要关心这行代码。
+  pthread_spin_init(&spin, 0);
 }
 
 CLogFile::~CLogFile()
@@ -1101,6 +1102,7 @@ CLogFile::~CLogFile()
   Close();
 
   // pthread_spin_destroy(&spin);  // 初学暂时不要关心这行代码。
+  pthread_spin_destroy(&spin);
 }
 
 void CLogFile::Close()
@@ -1171,6 +1173,7 @@ bool CLogFile::Write(const char *fmt,...)
   if (m_tracefp == 0) return false;
 
   // pthread_spin_lock(&spin);  // 初学暂时不要关心这行代码。
+  pthread_spin_lock(&spin);
 
   if (BackupLogFile() == false) return false;
 
@@ -1184,6 +1187,7 @@ bool CLogFile::Write(const char *fmt,...)
   if (m_bEnBuffer==false) fflush(m_tracefp);
 
   // pthread_spin_unlock(&spin);  // 初学暂时不要关心这行代码。
+  pthread_spin_unlock(&spin);
 
   return true;
 }
@@ -1195,6 +1199,7 @@ bool CLogFile::WriteEx(const char *fmt,...)
   if (m_tracefp == 0) return false;
 
   // pthread_spin_lock(&spin);  // 初学暂时不要关心这行代码。
+  pthread_spin_lock(&spin);
 
   va_list ap;
   va_start(ap,fmt);
@@ -1204,6 +1209,7 @@ bool CLogFile::WriteEx(const char *fmt,...)
   if (m_bEnBuffer==false) fflush(m_tracefp);
 
   // pthread_spin_unlock(&spin);  // 初学暂时不要关心这行代码。
+  pthread_spin_unlock(&spin);
 
   return true;
 }
@@ -1607,22 +1613,22 @@ bool CDir::ReadDir()
 
   if (strcmp(m_DateFMT,"yyyy-mm-dd hh24:mi:ss") == 0)
   {
-    nowtimer = *localtime(&st_filestat.st_mtime);
-    // localtime_r(&st_filestat.st_mtime,&nowtimer); 
+    // nowtimer = *localtime(&st_filestat.st_mtime);
+    localtime_r(&st_filestat.st_mtime,&nowtimer); 
     nowtimer.tm_mon++;
     snprintf(m_ModifyTime,20,"%04u-%02u-%02u %02u:%02u:%02u",\
              nowtimer.tm_year+1900,nowtimer.tm_mon,nowtimer.tm_mday,\
              nowtimer.tm_hour,nowtimer.tm_min,nowtimer.tm_sec);
 
-    nowtimer = *localtime(&st_filestat.st_ctime);
-    // localtime_r(&st_filestat.st_ctime,&nowtimer); 
+    // nowtimer = *localtime(&st_filestat.st_ctime);
+    localtime_r(&st_filestat.st_ctime,&nowtimer); 
     nowtimer.tm_mon++;
     snprintf(m_CreateTime,20,"%04u-%02u-%02u %02u:%02u:%02u",\
              nowtimer.tm_year+1900,nowtimer.tm_mon,nowtimer.tm_mday,\
              nowtimer.tm_hour,nowtimer.tm_min,nowtimer.tm_sec);
 
-    nowtimer = *localtime(&st_filestat.st_atime);
-    // localtime_r(&st_filestat.st_atime,&nowtimer); 
+    // nowtimer = *localtime(&st_filestat.st_atime);
+    localtime_r(&st_filestat.st_atime,&nowtimer); 
     nowtimer.tm_mon++;
     snprintf(m_AccessTime,20,"%04u-%02u-%02u %02u:%02u:%02u",\
              nowtimer.tm_year+1900,nowtimer.tm_mon,nowtimer.tm_mday,\
@@ -1631,22 +1637,22 @@ bool CDir::ReadDir()
 
   if (strcmp(m_DateFMT,"yyyymmddhh24miss") == 0)
   {
-    nowtimer = *localtime(&st_filestat.st_mtime);
-    // localtime_r(&st_filestat.st_mtime,&nowtimer); 
+    // nowtimer = *localtime(&st_filestat.st_mtime);
+    localtime_r(&st_filestat.st_mtime,&nowtimer); 
     nowtimer.tm_mon++;
     snprintf(m_ModifyTime,20,"%04u%02u%02u%02u%02u%02u",\
              nowtimer.tm_year+1900,nowtimer.tm_mon,nowtimer.tm_mday,\
              nowtimer.tm_hour,nowtimer.tm_min,nowtimer.tm_sec);
 
-    nowtimer = *localtime(&st_filestat.st_ctime);
-    // localtime_r(&st_filestat.st_ctime,&nowtimer); 
+    // nowtimer = *localtime(&st_filestat.st_ctime);
+    localtime_r(&st_filestat.st_ctime,&nowtimer); 
     nowtimer.tm_mon++;
     snprintf(m_CreateTime,20,"%04u%02u%02u%02u%02u%02u",\
              nowtimer.tm_year+1900,nowtimer.tm_mon,nowtimer.tm_mday,\
              nowtimer.tm_hour,nowtimer.tm_min,nowtimer.tm_sec);
 
-    nowtimer = *localtime(&st_filestat.st_atime);
-    // localtime_r(&st_filestat.st_atime,&nowtimer); 
+    // nowtimer = *localtime(&st_filestat.st_atime);
+    localtime_r(&st_filestat.st_atime,&nowtimer); 
     nowtimer.tm_mon++;
     snprintf(m_AccessTime,20,"%04u%02u%02u%02u%02u%02u",\
              nowtimer.tm_year+1900,nowtimer.tm_mon,nowtimer.tm_mday,\

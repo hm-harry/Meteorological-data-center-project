@@ -1,6 +1,6 @@
 all:demo01 demo02 demo03 demo04 demo05 demo06 demo07 demo08 demo10 demo11 demo12\
-demo13 demo14 demo31 demo32 demo33 #demo20 demo26 demo27 demo28 tcpselect client\
-#    tcppoll tcpepoll
+demo13 demo14 demo31 demo32 demo33 demo20 demo26 demo27 demo28 tcpselect client\
+tcppoll tcpepoll
 
 demo01:demo01.cpp
 	g++ -g -o demo01 demo01.cpp -lm -lc
@@ -50,28 +50,28 @@ demo32:demo32.cpp
 demo33:demo33.cpp
 	g++ -g -o demo33 demo33.cpp ../_public.cpp -lm -lc
 
-# demo20:demo20.cpp
-# 	g++ -g -o demo20 demo20.cpp ../_public.cpp -lpthread -lm -lc
+demo20:demo20.cpp
+	g++ -g -o demo20 demo20.cpp ../_public.cpp -lpthread -lm -lc
 
-# demo26:demo26.cpp
-# 	g++ -g -o demo26 demo26.cpp ../_public.cpp -lm -lc
+demo26:demo26.cpp
+	g++ -g -o demo26 demo26.cpp ../_public.cpp -lpthread -lm -lc
 
-# demo27:demo27.cpp
-# 	g++ -g -o demo27 demo27.cpp ../_public.cpp -lm -lc
+demo27:demo27.cpp
+	g++ -g -o demo27 demo27.cpp ../_public.cpp -lpthread -lm -lc
 
-# demo28:demo28.cpp
-# 	g++ -g -o demo28 demo28.cpp -I/project/public /project/public/_public.cpp -I/oracle/home/rdbms/public -I/project/public/db/oracle -L/oracle/home/lib -L. -lclntsh /project/public/db/oracle/_ooci.cpp -lm -lc
+demo28:demo28.cpp
+	g++ -g -o demo28 demo28.cpp -I/project/public /project/public/_public.cpp -I/oracle/home/rdbms/public -I/project/public/db/oracle -L/oracle/home/lib -L. -lclntsh /project/public/db/oracle/_ooci.cpp -lpthread -lm -lc
 
-# client:client.cpp
-# 	g++ -g -o client client.cpp ../_public.cpp -lm -lc
+client:client.cpp
+	g++ -g -o client client.cpp ../_public.cpp -lpthread -lm -lc
 
-# tcpselect:tcpselect.cpp
-# 	g++ -g -o tcpselect tcpselect.cpp ../_public.cpp -lm -lc
+tcpselect:tcpselect.cpp
+	g++ -g -o tcpselect tcpselect.cpp ../_public.cpp -lpthread -lm -lc
 
-# tcppoll:tcppoll.cpp
-# 	g++ -g -o tcppoll tcppoll.cpp ../_public.cpp -lm -lc
+tcppoll:tcppoll.cpp
+	g++ -g -o tcppoll tcppoll.cpp ../_public.cpp -lpthread -lm -lc
 
-# tcpepoll:tcpepoll.cpp
+tcpepoll:tcpepoll.cpp
 
 
 clean:

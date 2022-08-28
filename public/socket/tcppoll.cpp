@@ -38,7 +38,7 @@ int main(int argc,char *argv[])
 
   while (true)
   {
-    int infds=poll(fds,maxfd+1,5000);
+    int infds=poll(fds,maxfd+1,5000); // poll(fds,maxfd+1,-1);不限事件，最后一个参数单位：毫秒
 
     // 返回失败。
     if (infds < 0)
