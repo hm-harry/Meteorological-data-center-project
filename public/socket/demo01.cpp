@@ -10,6 +10,9 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <poll.h>
 
 int main(int argc,char *argv[])
 {
@@ -32,9 +35,12 @@ int main(int argc,char *argv[])
   servaddr.sin_port = htons(atoi(argv[2])); // 指定服务端的通讯端口。
   memcpy(&servaddr.sin_addr,h->h_addr,h->h_length);
 
+  fcntl(sockfd, F_SETFL, O_NONBLOCK); // 把socket连接设置为非阻塞
   if (connect(sockfd, (struct sockaddr *)&servaddr,sizeof(servaddr)) != 0)  // 向服务端发起连接清求。
   { 
-    perror("connect"); close(sockfd); return -1; 
+    if(errno != EINPROGRESS){
+      perror("connect"); close(sockfd); return -1; 
+    }
   }
 
   int iret;
@@ -49,6 +55,10 @@ int main(int argc,char *argv[])
     { perror("send"); break; }
     printf("发送：%s\n",buffer);
 
+    struct pollfd fds;
+    fds.fd = sockfd;
+    fds.events = POLLIN;
+    poll(&fds, 1, -1);
     memset(buffer,0,sizeof(buffer));
     if ( (iret=recv(sockfd,buffer,sizeof(buffer),0))<=0) // 接收服务端的回应报文。
     {

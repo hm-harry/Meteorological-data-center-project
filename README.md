@@ -10,6 +10,12 @@
 
 该项目从数据源采集数据后存储到多个数据库中；业务系统通过数据库集群的总线访问数据
 
+数据源：卫星接收站、雷达系统、国家基本站、区域气象站
+
+业务系统：预警发布系统、预报制作系统、公共服务平台、数据共享平台
+
+数据采集->数据处理->数据入库（数据库集群）->数据服务总线
+
 主要功能子系统为：
 
 **1.数据采集子系统**
@@ -350,7 +356,7 @@ I/O复用：在单进程/线程中同时监视多个连接（监视、读、写�
 
 
 
-### Select模型：
+### Select模型
 
 int select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout);
 
@@ -394,7 +400,7 @@ gettimeofday(&timeout , NULL); // 获取当前时间 now.tv_sec = now.tv_sec + 2
 
 
 
-## poll模型
+### poll模型
 
 相比select模型，弃用了bitmap，采用数组表示
 
@@ -408,25 +414,81 @@ events主要是POLLIN和POLLOUT两种
 
 轻量级的读检查是否超时
 
-struct pollfd fds;
+struct **pollfd** fds;
 
 fds.fd=sockfd;
 
 fds.events=POLLIN;
 
-if ( poll(&fds,1,itimeout*1000) <= 0 ) return false;
+**fds.revents**=0;
 
-## epoll模型
+if ( **poll**(&fds,1,itimeout*1000) <= 0 ) return false;
+
+### epoll模型
 
 epoll没有内存拷贝、没有轮巡、没有遍历
 
-创建句柄：int epoll_create(int size); 返回值：成功：文件描述符，失败：-1
+创建句柄：int **epoll_create**(int size); 返回值：成功：文件描述符，失败：-1
 
-注册事件：int epoll_ctl(int epfd, int op, int fd, struct epoll_event* event);
+注册事件：int **epoll_ctl**(int epfd, int op, int fd, struct **epoll_event*** event);
 
 op：EPOLL_CTL_ADD、EPOLL_CTL_MOD、EPOLL_CTL_DEL
 
-等待事件：int epoll_wait(int epfd, struct epoll_event* event, int maxevents, int timeout);
+等待事件：int **epoll_wait**(int epfd, struct epoll_event* event, int maxevents, int timeout);
+
+
+
+### 水平触发和边缘触发
+
+select和poll采用水平触发
+
+如果接收缓存区不为空表示有数据可读，如果数据没有读完，再调用函数（select,poll, epoll）时读事件一直触发
+
+如果发送缓存区没有满表示数据可写，如果缓冲区没有写满，再调用函数（select,poll, epoll）时写事件一直触发
+
+epoll有水平出发和边缘触发两种
+
+socket加入epoll之后，如果接收缓冲区不为空，触发可读时间；如果有新数据到达，再次触发可读事件
+
+socket加入epoll之后，如果发送缓冲区不为空，触发可写事件；如果发送缓冲区由满变为空时，再次触发可写
+
+
+
+ev.events = EPOLLIN; // 读事件 默认水平触发，边缘触发：ev.events = EPOLLIN|**EPOLLET**
+
+采用边缘触发需要将socket设置为非阻塞，否则读写会阻塞
+
+fcntl(listensock, F_SETFL, O_NONBLOCK);   循环accept或recv当出现if(errno == EAGAIN) break;
+
+
+
+### 正向代理
+
+**模块作用**：监听客户端连接，如果有客户端连接，代理程序向目标端发起连接请求，建立连接
+
+**模块位置**：/project/tools1/c/inetd.cpp
+
+**模块实现**：
+
+关键变量：代理路由参数（本地监听的通讯端口，目标主机的ip地址，目标主机的通讯端口，本地监听的socket）
+
+步骤：（1）把代理路由参数加载到vroute容器（2）初始化服务端用于监听的socket（使用fcntl设置为非阻塞）（3）创建epoll句柄：epollfd = **epoll_create**(1);（4）声明事件的数据结构：struct epoll_event ev; （5）遍历容器，把监听的socket的事件加入epollfd中：**epoll_ctl**(epollfd, EPOLL_CTL_ADD, vroute[ii].listensock, &ev); （6）存放epoll返回的事件：struct epoll_event evs[10]; （7）等待监视的socket有事件发生。int infds = **epoll_wait**(epollfd, evs, 10, -1);（8）遍历epoll返回的已发生事件的数组    1.如果发生事件的是listensock，表示有新的客户端连上来if(evs[ii].data.fd == vroute[jj].listensock)  接受客户端连接：int srcsock = accept(vroute[jj].listensock, (struct sockaddr*)&client, &len);   向目标ip和端口发起socket连接conntodst(vroute[jj].dstip, vroute[jj].dstport)   为两个socket准备可读事件，并添加到epoll中  更新clientsocks数组中两端socket的值和活动时间  2.如果是客户端连接的socket有事件，表示有报文发送过来或者连接已断开     接收buflen = recv(evs[ii].data.fd, buffer, sizeof(buffer), 0)   发送send(clientsocks[evs[ii].data.fd], buffer, buflen, 0);
+
+
+
+定时器：
+
+int tfd = timefd_create(CLOCK_MONOTONIC, TFD_NONBLOCK|TFD_CLOEXEC); // 创建timerfd
+
+ struct itimerspec timeout; memset(&timeout, 0, sizeof(struct itimerspec));
+
+ timeout.it_value.tv_sec = 20; timeout.it_value.tv_nsec = 0;  timefd_settime(tfd, 0, &timeout, NULL);
+
+
+
+### 反向代理
+
+
 
 
 
@@ -718,6 +780,17 @@ su -wuhm -c "/bin/sh /project /project/idc1/c/start.sh"
 模块实现：1.利用**LocalTime** 函数，获取文件超时的时间点存入字符串strTimeOut
 
 2. 利用**CDir**类**OpenDir（）**打开匹配的文件的**ReadDir**（）函数遍历目录和子目录中的文件
+
 3. 超时时间点比较，如果更早，就需要删除  即：strcmp(**Dir.m_ModifyTime**, strTimeOut）>=0
+
 4. 删除文件调用**REMOVE**(Dir.m_FullFileName)
 
+   
+
+## 总结
+
+Linux编程（多线程、进程通信、多线程、线程同步）
+
+数据库开发（高级）
+
+网络编程（中级）

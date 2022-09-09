@@ -43,14 +43,14 @@ int main(int argc, char *argv[])
   {
     // 从命令行输入内容。
     memset(buf,0,sizeof(buf));
+
     printf("please input:"); scanf("%s",buf);
     // strcpy(buf,"1111111111111111111111111");
-
     if (send(sockfd,buf,strlen(buf),0) <=0)
     { 
       printf("write() failed.\n");  close(sockfd);  return -1;
     }
-		
+
     memset(buf,0,sizeof(buf));
     if (recv(sockfd,buf,sizeof(buf),0) <=0) 
     { 
@@ -58,6 +58,7 @@ int main(int argc, char *argv[])
     }
 
     printf("recv:%s\n",buf);
+    usleep(1000);
   }
 } 
 

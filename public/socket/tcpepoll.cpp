@@ -10,6 +10,7 @@
 #include <arpa/inet.h>
 #include <sys/fcntl.h>
 #include <sys/epoll.h>
+#include <errno.h>
 
 // 初始化服务端的监听端口。
 int initserver(int port);
@@ -23,13 +24,15 @@ int main(int argc,char *argv[])
   printf("listensock=%d\n",listensock);
 
   if (listensock < 0) { printf("initserver() failed.\n"); return -1; }
-
+// fcntl(listensock, F_SETFL, O_NONBLOCK);
+fcntl(listensock, F_SETFL, fcntl(listensock, F_GETFD, 0) | O_NONBLOCK);
   // 创建epoll句柄
   int epollfd = epoll_create(1);
 
   // 为监听的socket准备可读事件
   struct epoll_event ev; // 声明事件的数据结构
-  ev.events = EPOLLIN; // 读事件
+  // ev.events = EPOLLIN; // 读事件 默认水平触发，边缘触发：ev.events = EPOLLIN|EPOLLET
+  ev.events = EPOLLIN|EPOLLET;
   ev.data.fd = listensock; // 指定事件的自定义数据，会随着epoll_wait()返回的事件一起返回
   
   // 把监听的socket的事件加入epollfd中
@@ -61,26 +64,39 @@ int main(int argc,char *argv[])
    
       // 如果发生事件的是listensock，表示有新的客户端连上来
       if(evs[ii].data.fd == listensock){
+// static int ss = 0;
+// if(ss++ < 2) continue;
+while(true){
         struct sockaddr_in client;
         socklen_t len = sizeof(client);
         int clientsock = accept(listensock, (struct sockaddr*)&client, &len);
+if(errno == EAGAIN) break;// 非阻塞的Socket没有准备好的连接
         if(clientsock < 0){ perror("accept() failed"); continue;}
-
+fcntl(clientsock, F_SETFL, fcntl(listensock, F_GETFD, 0) | O_NONBLOCK);
         printf ("accept client(socket=%d) ok.\n",clientsock);
-
         // 为新客户端准备可读事件，并添加到epoll中
         ev.data.fd = clientsock;
-        ev.events = EPOLLIN;
+        // ev.events = EPOLLIN;
+        ev.events = EPOLLIN|EPOLLET;
         epoll_ctl(epollfd, EPOLL_CTL_ADD, clientsock, &ev);
+}
       }else{
         // 如果是客户端连接的socket有事件，表示有报文发过来或者连接已断开
         char buffer[1024]; // 存放从客户端读取的数据
         memset(buffer, 0, sizeof(buffer));
-        if(recv(evs[ii].data.fd, buffer, sizeof(buffer), 0) <= 0){
+int iret = 0;
+char* ptr = buffer;
+while(true)
+{
+        if((iret = recv(evs[ii].data.fd, ptr, 10, 0)) <= 0){
+if(errno == EAGAIN) break;
           // 如果客户端连接已断开
           printf("client(eventfd = %d) disconnected.\n", evs[ii].data.fd);
           close(evs[ii].data.fd); // 关闭客户端的socket
-        }else{
+        }
+        ptr = ptr + iret;
+        }
+        if(strlen(buffer) > 0){
           // 如果客户端有报文发过来
           printf("recv(eventfd = %d):%s\n", evs[ii].data.fd, buffer);
           // 把接收到的报文内容原封不动的发回去

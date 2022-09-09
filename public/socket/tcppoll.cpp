@@ -81,7 +81,6 @@ int main(int argc,char *argv[])
       else
       {
         // 如果是客户端连接的socke有事件，表示有报文发过来或者连接已断开。
-
         char buffer[1024]; // 存放从客户端读取的数据。
         memset(buffer,0,sizeof(buffer));
         if (recv(eventfd,buffer,sizeof(buffer),0)<=0)

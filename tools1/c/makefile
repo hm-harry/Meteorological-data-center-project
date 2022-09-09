@@ -33,7 +33,7 @@ CFLAGS = -g
 
 all:procctl checkproc gzipfiles deletefiles ftpgetfiles ftpputfiles tcpputfiles fileserver tcpgetfiles execsql dminingmysql xmltodb syncupdate \
 syncincrement syncincrementex deletetable migratetable  xmltodb_oracle deletetable_oracle migratetable_oracle dminingoracle syncupdate_oracle \
-syncincrement_oracle syncincrementex_oracle webserver
+syncincrement_oracle syncincrementex_oracle webserver inetd rinetd rinetdin
 
 procctl:procctl.cpp
 	g++ -o procctl procctl.cpp
@@ -134,7 +134,19 @@ syncincrementex_oracle:syncincrementex_oracle.cpp _tools_oracle.h _tools_oracle.
 webserver:webserver.cpp
 	g++ $(CFLAGS) -o webserver webserver.cpp $(PUBINCL) $(PUBCPP) $(ORAINCL) $(ORALIB) $(ORALIBS) $(ORACPP) -lpthread -lm -lc
 	cp webserver ../bin/.
+
+inetd:inetd.cpp
+	g++ $(CFLAGS) -o inetd inetd.cpp $(PUBINCL) $(PUBCPP) $(ORAINCL) $(ORALIB) $(ORALIBS) $(ORACPP) -lpthread -lm -lc
+	cp inetd ../bin/.
+
+rinetd:rinetd.cpp
+	g++ $(CFLAGS) -o rinetd rinetd.cpp $(PUBINCL) $(PUBCPP) $(ORAINCL) $(ORALIB) $(ORALIBS) $(ORACPP) -lpthread -lm -lc
+	cp rinetd ../bin/.
+
+rinetdin:rinetdin.cpp
+	g++ $(CFLAGS) -o rinetdin rinetdin.cpp $(PUBINCL) $(PUBCPP) $(ORAINCL) $(ORALIB) $(ORALIBS) $(ORACPP) -lpthread -lm -lc
+	cp rinetdin ../bin/.
 clean:
 	rm -f procctl checkproc gzipfiles deletefiles ftpgetfiles ftpputfiles tcpputfiles fileserver tcpgetfiles execsql dminingmysql xmltodb syncupdate \
 	syncincrement syncincrementex deletetable migratetable xmltodb_oracle deletetable_oracle migratetable_oracle dminingoracle syncupdate_oracle \
-	syncincrement_oracle syncincrementex_oracle webserver
+	syncincrement_oracle syncincrementex_oracle webserver inetd rinetd rinetdin
